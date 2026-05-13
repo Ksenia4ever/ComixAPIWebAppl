@@ -15,6 +15,14 @@ namespace ComixAPIWebApp.Controllers
             _context = context;
         }
 
+        public class OrderItemRequest
+        {
+            public int OrderId { get; set; }
+            public int ComicId { get; set; }
+            public int Quantity { get; set; }
+            public decimal UnitPrice { get; set; }
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OrderItem>>> GetOrderItems()
         {
@@ -50,35 +58,69 @@ namespace ComixAPIWebApp.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutOrderItem(int id, OrderItem orderItem)
+        public async Task<IActionResult> PutOrderItem(int id, OrderItemRequest request)
         {
-            if (id != orderItem.Id)
+            var orderItem = await _context.OrderItems.FindAsync(id);
+            if (orderItem == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(orderItem).State = EntityState.Modified;
-
-            try
+            var orderExists = await _context.Orders.AnyAsync(o => o.Id == request.OrderId);
+            if (!orderExists)
             {
-                await _context.SaveChangesAsync();
+                return BadRequest("Замовлення з таким Id не існує.");
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!OrderItemExists(id))
-                {
-                    return NotFound();
-                }
 
-                throw;
+            var comicExists = await _context.Comics.AnyAsync(c => c.Id == request.ComicId);
+            if (!comicExists)
+            {
+                return BadRequest("Комікс з таким Id не існує.");
             }
+
+            if (request.Quantity <= 0)
+            {
+                return BadRequest("Кількість повинна бути більшою за 0.");
+            }
+
+            orderItem.OrderId = request.OrderId;
+            orderItem.ComicId = request.ComicId;
+            orderItem.Quantity = request.Quantity;
+            orderItem.UnitPrice = request.UnitPrice;
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
         [HttpPost]
-        public async Task<ActionResult<OrderItem>> PostOrderItem(OrderItem orderItem)
+        public async Task<ActionResult<OrderItem>> PostOrderItem(OrderItemRequest request)
         {
+            var orderExists = await _context.Orders.AnyAsync(o => o.Id == request.OrderId);
+            if (!orderExists)
+            {
+                return BadRequest("Замовлення з таким Id не існує.");
+            }
+
+            var comicExists = await _context.Comics.AnyAsync(c => c.Id == request.ComicId);
+            if (!comicExists)
+            {
+                return BadRequest("Комікс з таким Id не існує.");
+            }
+
+            if (request.Quantity <= 0)
+            {
+                return BadRequest("Кількість повинна бути більшою за 0.");
+            }
+
+            var orderItem = new OrderItem
+            {
+                OrderId = request.OrderId,
+                ComicId = request.ComicId,
+                Quantity = request.Quantity,
+                UnitPrice = request.UnitPrice
+            };
+
             _context.OrderItems.Add(orderItem);
             await _context.SaveChangesAsync();
 
@@ -106,115 +148,3 @@ namespace ComixAPIWebApp.Controllers
         }
     }
 }
-
-
-
-
-
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Threading.Tasks;
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.EntityFrameworkCore;
-//using ComixAPIWebApp.Models;
-
-//namespace ComixAPIWebAppl.Controllers
-//{
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    public class OrderItemsController : ControllerBase
-//    {
-//        private readonly ComixAPIContext _context;
-
-//        public OrderItemsController(ComixAPIContext context)
-//        {
-//            _context = context;
-//        }
-
-//        // GET: api/OrderItems
-//        [HttpGet]
-//        public async Task<ActionResult<IEnumerable<OrderItem>>> GetOrderItems()
-//        {
-//            return await _context.OrderItems.ToListAsync();
-//        }
-
-//        // GET: api/OrderItems/5
-//        [HttpGet("{id}")]
-//        public async Task<ActionResult<OrderItem>> GetOrderItem(int id)
-//        {
-//            var orderItem = await _context.OrderItems.FindAsync(id);
-
-//            if (orderItem == null)
-//            {
-//                return NotFound();
-//            }
-
-//            return orderItem;
-//        }
-
-//        // PUT: api/OrderItems/5
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPut("{id}")]
-//        public async Task<IActionResult> PutOrderItem(int id, OrderItem orderItem)
-//        {
-//            if (id != orderItem.Id)
-//            {
-//                return BadRequest();
-//            }
-
-//            _context.Entry(orderItem).State = EntityState.Modified;
-
-//            try
-//            {
-//                await _context.SaveChangesAsync();
-//            }
-//            catch (DbUpdateConcurrencyException)
-//            {
-//                if (!OrderItemExists(id))
-//                {
-//                    return NotFound();
-//                }
-//                else
-//                {
-//                    throw;
-//                }
-//            }
-
-//            return NoContent();
-//        }
-
-//        // POST: api/OrderItems
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPost]
-//        public async Task<ActionResult<OrderItem>> PostOrderItem(OrderItem orderItem)
-//        {
-//            _context.OrderItems.Add(orderItem);
-//            await _context.SaveChangesAsync();
-
-//            return CreatedAtAction("GetOrderItem", new { id = orderItem.Id }, orderItem);
-//        }
-
-//        // DELETE: api/OrderItems/5
-//        [HttpDelete("{id}")]
-//        public async Task<IActionResult> DeleteOrderItem(int id)
-//        {
-//            var orderItem = await _context.OrderItems.FindAsync(id);
-//            if (orderItem == null)
-//            {
-//                return NotFound();
-//            }
-
-//            _context.OrderItems.Remove(orderItem);
-//            await _context.SaveChangesAsync();
-
-//            return NoContent();
-//        }
-
-//        private bool OrderItemExists(int id)
-//        {
-//            return _context.OrderItems.Any(e => e.Id == id);
-//        }
-//    }
-//}

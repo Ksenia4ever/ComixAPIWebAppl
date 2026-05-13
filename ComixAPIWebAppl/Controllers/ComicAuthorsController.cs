@@ -15,6 +15,12 @@ namespace ComixAPIWebApp.Controllers
             _context = context;
         }
 
+        public class ComicAuthorRequest
+        {
+            public int ComicId { get; set; }
+            public int AuthorId { get; set; }
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ComicAuthor>>> GetComicAuthors()
         {
@@ -43,12 +49,40 @@ namespace ComixAPIWebApp.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ComicAuthor>> PostComicAuthor(ComicAuthor comicAuthor)
+        public async Task<ActionResult<ComicAuthor>> PostComicAuthor(ComicAuthorRequest request)
         {
+            var comicExists = await _context.Comics.AnyAsync(c => c.Id == request.ComicId);
+            if (!comicExists)
+            {
+                return BadRequest("Комікс з таким Id не існує.");
+            }
+
+            var authorExists = await _context.Authors.AnyAsync(a => a.Id == request.AuthorId);
+            if (!authorExists)
+            {
+                return BadRequest("Автор з таким Id не існує.");
+            }
+
+            var relationExists = await _context.ComicAuthors
+                .AnyAsync(ca => ca.ComicId == request.ComicId && ca.AuthorId == request.AuthorId);
+
+            if (relationExists)
+            {
+                return BadRequest("Такий зв’язок між коміксом і автором вже існує.");
+            }
+
+            var comicAuthor = new ComicAuthor
+            {
+                ComicId = request.ComicId,
+                AuthorId = request.AuthorId
+            };
+
             _context.ComicAuthors.Add(comicAuthor);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetComicAuthors), new { comicId = comicAuthor.ComicId, authorId = comicAuthor.AuthorId }, comicAuthor);
+            return CreatedAtAction(nameof(GetComicAuthors),
+                new { comicId = comicAuthor.ComicId, authorId = comicAuthor.AuthorId },
+                comicAuthor);
         }
 
         [HttpDelete("{comicId}/{authorId}")]
@@ -67,129 +101,3 @@ namespace ComixAPIWebApp.Controllers
         }
     }
 }
-
-
-
-
-
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Threading.Tasks;
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.EntityFrameworkCore;
-//using ComixAPIWebApp.Models;
-
-//namespace ComixAPIWebAppl.Controllers
-//{
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    public class ComicAuthorsController : ControllerBase
-//    {
-//        private readonly ComixAPIContext _context;
-
-//        public ComicAuthorsController(ComixAPIContext context)
-//        {
-//            _context = context;
-//        }
-
-//        // GET: api/ComicAuthors
-//        [HttpGet]
-//        public async Task<ActionResult<IEnumerable<ComicAuthor>>> GetComicAuthors()
-//        {
-//            return await _context.ComicAuthors.ToListAsync();
-//        }
-
-//        // GET: api/ComicAuthors/5
-//        [HttpGet("{id}")]
-//        public async Task<ActionResult<ComicAuthor>> GetComicAuthor(int id)
-//        {
-//            var comicAuthor = await _context.ComicAuthors.FindAsync(id);
-
-//            if (comicAuthor == null)
-//            {
-//                return NotFound();
-//            }
-
-//            return comicAuthor;
-//        }
-
-//        // PUT: api/ComicAuthors/5
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPut("{id}")]
-//        public async Task<IActionResult> PutComicAuthor(int id, ComicAuthor comicAuthor)
-//        {
-//            if (id != comicAuthor.ComicId)
-//            {
-//                return BadRequest();
-//            }
-
-//            _context.Entry(comicAuthor).State = EntityState.Modified;
-
-//            try
-//            {
-//                await _context.SaveChangesAsync();
-//            }
-//            catch (DbUpdateConcurrencyException)
-//            {
-//                if (!ComicAuthorExists(id))
-//                {
-//                    return NotFound();
-//                }
-//                else
-//                {
-//                    throw;
-//                }
-//            }
-
-//            return NoContent();
-//        }
-
-//        // POST: api/ComicAuthors
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPost]
-//        public async Task<ActionResult<ComicAuthor>> PostComicAuthor(ComicAuthor comicAuthor)
-//        {
-//            _context.ComicAuthors.Add(comicAuthor);
-//            try
-//            {
-//                await _context.SaveChangesAsync();
-//            }
-//            catch (DbUpdateException)
-//            {
-//                if (ComicAuthorExists(comicAuthor.ComicId))
-//                {
-//                    return Conflict();
-//                }
-//                else
-//                {
-//                    throw;
-//                }
-//            }
-
-//            return CreatedAtAction("GetComicAuthor", new { id = comicAuthor.ComicId }, comicAuthor);
-//        }
-
-//        // DELETE: api/ComicAuthors/5
-//        [HttpDelete("{id}")]
-//        public async Task<IActionResult> DeleteComicAuthor(int id)
-//        {
-//            var comicAuthor = await _context.ComicAuthors.FindAsync(id);
-//            if (comicAuthor == null)
-//            {
-//                return NotFound();
-//            }
-
-//            _context.ComicAuthors.Remove(comicAuthor);
-//            await _context.SaveChangesAsync();
-
-//            return NoContent();
-//        }
-
-//        private bool ComicAuthorExists(int id)
-//        {
-//            return _context.ComicAuthors.Any(e => e.ComicId == id);
-//        }
-//    }
-//}

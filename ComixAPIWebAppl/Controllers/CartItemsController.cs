@@ -15,6 +15,14 @@ namespace ComixAPIWebApp.Controllers
             _context = context;
         }
 
+        public class CartItemRequest
+        {
+            public int CartId { get; set; }
+            public int ComicId { get; set; }
+            public int Quantity { get; set; }
+            public decimal UnitPrice { get; set; }
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CartItem>>> GetCartItems()
         {
@@ -60,7 +68,7 @@ namespace ComixAPIWebApp.Controllers
 
             if (quantity <= 0)
             {
-                return BadRequest();
+                return BadRequest("Кількість повинна бути більшою за 0.");
             }
 
             cartItem.Quantity = quantity;
@@ -70,35 +78,87 @@ namespace ComixAPIWebApp.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCartItem(int id, CartItem cartItem)
+        public async Task<IActionResult> PutCartItem(int id, CartItemRequest request)
         {
-            if (id != cartItem.Id)
+            var cartItem = await _context.CartItems.FindAsync(id);
+            if (cartItem == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(cartItem).State = EntityState.Modified;
-
-            try
+            var cartExists = await _context.Carts.AnyAsync(c => c.Id == request.CartId);
+            if (!cartExists)
             {
-                await _context.SaveChangesAsync();
+                return BadRequest("Кошик з таким Id не існує.");
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CartItemExists(id))
-                {
-                    return NotFound();
-                }
 
-                throw;
+            var comicExists = await _context.Comics.AnyAsync(c => c.Id == request.ComicId);
+            if (!comicExists)
+            {
+                return BadRequest("Комікс з таким Id не існує.");
             }
+
+            if (request.Quantity <= 0)
+            {
+                return BadRequest("Кількість повинна бути більшою за 0.");
+            }
+
+            var duplicateExists = await _context.CartItems
+                .AnyAsync(ci => ci.CartId == request.CartId &&
+                                ci.ComicId == request.ComicId &&
+                                ci.Id != id);
+
+            if (duplicateExists)
+            {
+                return BadRequest("Такий комікс уже є в цьому кошику.");
+            }
+
+            cartItem.CartId = request.CartId;
+            cartItem.ComicId = request.ComicId;
+            cartItem.Quantity = request.Quantity;
+            cartItem.UnitPrice = request.UnitPrice;
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
         [HttpPost]
-        public async Task<ActionResult<CartItem>> PostCartItem(CartItem cartItem)
+        public async Task<ActionResult<CartItem>> PostCartItem(CartItemRequest request)
         {
+            var cartExists = await _context.Carts.AnyAsync(c => c.Id == request.CartId);
+            if (!cartExists)
+            {
+                return BadRequest("Кошик з таким Id не існує.");
+            }
+
+            var comicExists = await _context.Comics.AnyAsync(c => c.Id == request.ComicId);
+            if (!comicExists)
+            {
+                return BadRequest("Комікс з таким Id не існує.");
+            }
+
+            if (request.Quantity <= 0)
+            {
+                return BadRequest("Кількість повинна бути більшою за 0.");
+            }
+
+            var duplicateExists = await _context.CartItems
+                .AnyAsync(ci => ci.CartId == request.CartId && ci.ComicId == request.ComicId);
+
+            if (duplicateExists)
+            {
+                return BadRequest("Такий комікс уже є в цьому кошику.");
+            }
+
+            var cartItem = new CartItem
+            {
+                CartId = request.CartId,
+                ComicId = request.ComicId,
+                Quantity = request.Quantity,
+                UnitPrice = request.UnitPrice
+            };
+
             _context.CartItems.Add(cartItem);
             await _context.SaveChangesAsync();
 
@@ -126,114 +186,3 @@ namespace ComixAPIWebApp.Controllers
         }
     }
 }
-
-
-
-
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Threading.Tasks;
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.EntityFrameworkCore;
-//using ComixAPIWebApp.Models;
-
-//namespace ComixAPIWebAppl.Controllers
-//{
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    public class CartItemsController : ControllerBase
-//    {
-//        private readonly ComixAPIContext _context;
-
-//        public CartItemsController(ComixAPIContext context)
-//        {
-//            _context = context;
-//        }
-
-//        // GET: api/CartItems
-//        [HttpGet]
-//        public async Task<ActionResult<IEnumerable<CartItem>>> GetCartItems()
-//        {
-//            return await _context.CartItems.ToListAsync();
-//        }
-
-//        // GET: api/CartItems/5
-//        [HttpGet("{id}")]
-//        public async Task<ActionResult<CartItem>> GetCartItem(int id)
-//        {
-//            var cartItem = await _context.CartItems.FindAsync(id);
-
-//            if (cartItem == null)
-//            {
-//                return NotFound();
-//            }
-
-//            return cartItem;
-//        }
-
-//        // PUT: api/CartItems/5
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPut("{id}")]
-//        public async Task<IActionResult> PutCartItem(int id, CartItem cartItem)
-//        {
-//            if (id != cartItem.Id)
-//            {
-//                return BadRequest();
-//            }
-
-//            _context.Entry(cartItem).State = EntityState.Modified;
-
-//            try
-//            {
-//                await _context.SaveChangesAsync();
-//            }
-//            catch (DbUpdateConcurrencyException)
-//            {
-//                if (!CartItemExists(id))
-//                {
-//                    return NotFound();
-//                }
-//                else
-//                {
-//                    throw;
-//                }
-//            }
-
-//            return NoContent();
-//        }
-
-//        // POST: api/CartItems
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPost]
-//        public async Task<ActionResult<CartItem>> PostCartItem(CartItem cartItem)
-//        {
-//            _context.CartItems.Add(cartItem);
-//            await _context.SaveChangesAsync();
-
-//            return CreatedAtAction("GetCartItem", new { id = cartItem.Id }, cartItem);
-//        }
-
-//        // DELETE: api/CartItems/5
-//        [HttpDelete("{id}")]
-//        public async Task<IActionResult> DeleteCartItem(int id)
-//        {
-//            var cartItem = await _context.CartItems.FindAsync(id);
-//            if (cartItem == null)
-//            {
-//                return NotFound();
-//            }
-
-//            _context.CartItems.Remove(cartItem);
-//            await _context.SaveChangesAsync();
-
-//            return NoContent();
-//        }
-
-//        private bool CartItemExists(int id)
-//        {
-//            return _context.CartItems.Any(e => e.Id == id);
-//        }
-//    }
-//}
