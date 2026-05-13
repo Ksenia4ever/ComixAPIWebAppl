@@ -15,6 +15,11 @@ namespace ComixAPIWebApp.Controllers
             _context = context;
         }
 
+        public class GenreRequest
+        {
+            public string Name { get; set; }
+        }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Genre>>> GetGenres()
         {
@@ -28,57 +33,64 @@ namespace ComixAPIWebApp.Controllers
 
             if (genre == null)
             {
-                return NotFound();
+                return NotFound("Жанр не знайдено.");
             }
 
             return genre;
         }
 
-        [HttpGet("{id}/comics")]
-        public async Task<ActionResult<IEnumerable<Comic>>> GetGenreComics(int id)
-        {
-            if (!GenreExists(id))
-            {
-                return NotFound();
-            }
-
-            return await _context.Comics
-                .Where(c => c.GenreId == id)
-                .ToListAsync();
-        }
-
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutGenre(int id, Genre genre)
+        public async Task<IActionResult> PutGenre(int id, GenreRequest request)
         {
-            if (id != genre.Id)
+            var currentGenre = await _context.Genres.FindAsync(id);
+            if (currentGenre == null)
             {
-                return BadRequest();
+                return NotFound("Жанр не знайдено.");
             }
 
-            _context.Entry(genre).State = EntityState.Modified;
-
-            try
+            if (string.IsNullOrWhiteSpace(request.Name))
             {
-                await _context.SaveChangesAsync();
+                return BadRequest("Назва жанру не може бути порожньою.");
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!GenreExists(id))
-                {
-                    return NotFound();
-                }
 
-                throw;
+            var duplicateGenre = await _context.Genres
+                .AnyAsync(g => g.Name.ToLower() == request.Name.ToLower() && g.Id != id);
+
+            if (duplicateGenre)
+            {
+                return BadRequest("Жанр з такою назвою вже існує.");
             }
+
+            currentGenre.Name = request.Name;
+            currentGenre.Modified = DateTime.Now;
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
         [HttpPost]
-        public async Task<ActionResult<Genre>> PostGenre(Genre genre)
+        public async Task<ActionResult<Genre>> PostGenre(GenreRequest request)
         {
-            genre.Created = DateTime.Now;
-            genre.Modified = DateTime.Now;
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return BadRequest("Назва жанру не може бути порожньою.");
+            }
+
+            var duplicateGenre = await _context.Genres
+                .AnyAsync(g => g.Name.ToLower() == request.Name.ToLower());
+
+            if (duplicateGenre)
+            {
+                return BadRequest("Жанр з такою назвою вже існує.");
+            }
+
+            var genre = new Genre
+            {
+                Name = request.Name,
+                Created = DateTime.Now,
+                Modified = DateTime.Now
+            };
 
             _context.Genres.Add(genre);
             await _context.SaveChangesAsync();
@@ -92,7 +104,7 @@ namespace ComixAPIWebApp.Controllers
             var genre = await _context.Genres.FindAsync(id);
             if (genre == null)
             {
-                return NotFound();
+                return NotFound("Жанр не знайдено.");
             }
 
             _context.Genres.Remove(genre);
@@ -100,119 +112,5 @@ namespace ComixAPIWebApp.Controllers
 
             return NoContent();
         }
-
-        private bool GenreExists(int id)
-        {
-            return _context.Genres.Any(e => e.Id == id);
-        }
     }
 }
-
-
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Threading.Tasks;
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.EntityFrameworkCore;
-//using ComixAPIWebApp.Models;
-
-//namespace ComixAPIWebAppl.Controllers
-//{
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    public class GenresController : ControllerBase
-//    {
-//        private readonly ComixAPIContext _context;
-
-//        public GenresController(ComixAPIContext context)
-//        {
-//            _context = context;
-//        }
-
-//        // GET: api/Genres
-//        [HttpGet]
-//        public async Task<ActionResult<IEnumerable<Genre>>> GetGenres()
-//        {
-//            return await _context.Genres.ToListAsync();
-//        }
-
-//        // GET: api/Genres/5
-//        [HttpGet("{id}")]
-//        public async Task<ActionResult<Genre>> GetGenre(int id)
-//        {
-//            var genre = await _context.Genres.FindAsync(id);
-
-//            if (genre == null)
-//            {
-//                return NotFound();
-//            }
-
-//            return genre;
-//        }
-
-//        // PUT: api/Genres/5
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPut("{id}")]
-//        public async Task<IActionResult> PutGenre(int id, Genre genre)
-//        {
-//            if (id != genre.Id)
-//            {
-//                return BadRequest();
-//            }
-
-//            _context.Entry(genre).State = EntityState.Modified;
-
-//            try
-//            {
-//                await _context.SaveChangesAsync();
-//            }
-//            catch (DbUpdateConcurrencyException)
-//            {
-//                if (!GenreExists(id))
-//                {
-//                    return NotFound();
-//                }
-//                else
-//                {
-//                    throw;
-//                }
-//            }
-
-//            return NoContent();
-//        }
-
-//        // POST: api/Genres
-//        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-//        [HttpPost]
-//        public async Task<ActionResult<Genre>> PostGenre(Genre genre)
-//        {
-//            _context.Genres.Add(genre);
-//            await _context.SaveChangesAsync();
-
-//            return CreatedAtAction("GetGenre", new { id = genre.Id }, genre);
-//        }
-
-//        // DELETE: api/Genres/5
-//        [HttpDelete("{id}")]
-//        public async Task<IActionResult> DeleteGenre(int id)
-//        {
-//            var genre = await _context.Genres.FindAsync(id);
-//            if (genre == null)
-//            {
-//                return NotFound();
-//            }
-
-//            _context.Genres.Remove(genre);
-//            await _context.SaveChangesAsync();
-
-//            return NoContent();
-//        }
-
-//        private bool GenreExists(int id)
-//        {
-//            return _context.Genres.Any(e => e.Id == id);
-//        }
-//    }
-//}

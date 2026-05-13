@@ -1,0 +1,67 @@
+﻿@{
+    ViewData["Title"] = "Комікси";
+}
+
+<section class="card">
+    <h3>Додати комікс</h3>
+    <form action="javascript:void(0);" method="POST" onsubmit="addComic()">
+        <input type="text" id="add-title" placeholder="Назва коміксу">
+        <input type="text" id="add-description" placeholder="Опис">
+        <input type="number" step="0.01" id="add-price" placeholder="Ціна">
+        <input type="number" id="add-stockQuantity" placeholder="Кількість на складі">
+        <input type="number" id="add-releaseYear" placeholder="Рік випуску">
+        <input type="number" id="add-publisherId" placeholder="Id видавництва">
+        <input type="number" id="add-genreId" placeholder="Id жанру">
+        <input type="text" id="add-coverImagePath" placeholder="Шлях до обкладинки">
+        <label>
+            <input type="checkbox" id="add-isActive" checked> Активний
+        </label>
+        <input type="submit" value="Add">
+    </form>
+</section>
+
+<section class="card" id="editComic" style="display:none;">
+    <h3>Редагувати комікс</h3>
+    <form action="javascript:void(0);" onsubmit="updateComic()">
+        <input type="hidden" id="edit-id">
+        <input type="text" id="edit-title" placeholder="Назва коміксу">
+        <input type="text" id="edit-description" placeholder="Опис">
+        <input type="number" step="0.01" id="edit-price" placeholder="Ціна">
+        <input type="number" id="edit-stockQuantity" placeholder="Кількість на складі">
+        <input type="number" id="edit-releaseYear" placeholder="Рік випуску">
+        <input type="number" id="edit-publisherId" placeholder="Id видавництва">
+        <input type="number" id="edit-genreId" placeholder="Id жанру">
+        <input type="text" id="edit-coverImagePath" placeholder="Шлях до обкладинки">
+        <label>
+            <input type="checkbox" id="edit-isActive"> Активний
+        </label>
+        <input type="submit" value="Save">
+        <a onclick="closeInput()" aria-label="Close" class="close-btn">&#10006;</a>
+    </form>
+</section>
+
+<p id="counter"></p>
+
+<section class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Назва</th>
+                <th>Опис</th>
+                <th>Ціна</th>
+                <th>Склад</th>
+                <th>Рік</th>
+                <th>Жанр</th>
+                <th>Видавництво</th>
+                <th>Активний</th>
+                <th colspan="2">Дії</th>
+            </tr>
+        </thead>
+        <tbody id="comics"></tbody>
+    </table>
+</section>
+
+<script src="~/js/comics.js"></script>
+<script>
+    getComics();
+</script>

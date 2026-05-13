@@ -1,0 +1,40 @@
+﻿@{
+    ViewData["Title"] = "Жанри";
+}
+
+<section class="card">
+    <h3>Додати жанр</h3>
+    <form action="javascript:void(0);" method="POST" onsubmit="addGenre()">
+        <input type="text" id="add-name" placeholder="Нова назва жанру">
+        <input type="submit" value="Add">
+    </form>
+</section>
+
+<section class="card" id="editGenre" style="display:none;">
+    <h3>Редагувати жанр</h3>
+    <form action="javascript:void(0);" onsubmit="updateGenre()">
+        <input type="hidden" id="edit-id">
+        <input type="text" id="edit-name" placeholder="Назва жанру">
+        <input type="submit" value="Save">
+        <a onclick="closeInput()" aria-label="Close" class="close-btn">&#10006;</a>
+    </form>
+</section>
+
+<p id="counter"></p>
+
+<section class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Назва</th>
+                <th colspan="2">Дії</th>
+            </tr>
+        </thead>
+        <tbody id="genres"></tbody>
+    </table>
+</section>
+
+<script src="~/js/genres.js"></script>
+<script>
+    getGenres();
+</script>

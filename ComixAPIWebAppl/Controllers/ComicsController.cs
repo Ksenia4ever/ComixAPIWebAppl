@@ -51,7 +51,7 @@ namespace ComixAPIWebApp.Controllers
 
             if (comic == null)
             {
-                return NotFound();
+                return NotFound("Комікс не знайдено.");
             }
 
             return comic;
@@ -83,7 +83,12 @@ namespace ComixAPIWebApp.Controllers
             var comic = await _context.Comics.FindAsync(id);
             if (comic == null)
             {
-                return NotFound();
+                return NotFound("Комікс не знайдено.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Title))
+            {
+                return BadRequest("Назва коміксу не може бути порожньою.");
             }
 
             var genreExists = await _context.Genres.AnyAsync(g => g.Id == request.GenreId);
@@ -117,6 +122,11 @@ namespace ComixAPIWebApp.Controllers
         [HttpPost]
         public async Task<ActionResult<Comic>> PostComic(ComicRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request.Title))
+            {
+                return BadRequest("Назва коміксу не може бути порожньою.");
+            }
+
             var genreExists = await _context.Genres.AnyAsync(g => g.Id == request.GenreId);
             if (!genreExists)
             {
@@ -147,7 +157,12 @@ namespace ComixAPIWebApp.Controllers
             _context.Comics.Add(comic);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetComic), new { id = comic.Id }, comic);
+            var createdComic = await _context.Comics
+                .Include(c => c.Genre)
+                .Include(c => c.Publisher)
+                .FirstOrDefaultAsync(c => c.Id == comic.Id);
+
+            return CreatedAtAction(nameof(GetComic), new { id = comic.Id }, createdComic);
         }
 
         [HttpDelete("{id}")]
@@ -156,18 +171,13 @@ namespace ComixAPIWebApp.Controllers
             var comic = await _context.Comics.FindAsync(id);
             if (comic == null)
             {
-                return NotFound();
+                return NotFound("Комікс не знайдено.");
             }
 
             _context.Comics.Remove(comic);
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool ComicExists(int id)
-        {
-            return _context.Comics.Any(e => e.Id == id);
         }
     }
 }

@@ -1,0 +1,43 @@
+﻿@{
+    ViewData["Title"] = "Видавництва";
+}
+
+<section class="card">
+    <h3>Додати видавництво</h3>
+    <form action="javascript:void(0);" method="POST" onsubmit="addPublisher()">
+        <input type="text" id="add-name" placeholder="Назва видавництва">
+        <input type="text" id="add-country" placeholder="Країна">
+        <input type="submit" value="Add">
+    </form>
+</section>
+
+<section class="card" id="editPublisher" style="display:none;">
+    <h3>Редагувати видавництво</h3>
+    <form action="javascript:void(0);" onsubmit="updatePublisher()">
+        <input type="hidden" id="edit-id">
+        <input type="text" id="edit-name" placeholder="Назва видавництва">
+        <input type="text" id="edit-country" placeholder="Країна">
+        <input type="submit" value="Save">
+        <a onclick="closeInput()" aria-label="Close" class="close-btn">&#10006;</a>
+    </form>
+</section>
+
+<p id="counter"></p>
+
+<section class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Назва</th>
+                <th>Країна</th>
+                <th colspan="2">Дії</th>
+            </tr>
+        </thead>
+        <tbody id="publishers"></tbody>
+    </table>
+</section>
+
+<script src="~/js/publishers.js"></script>
+<script>
+    getPublishers();
+</script>

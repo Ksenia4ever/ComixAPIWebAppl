@@ -1,0 +1,61 @@
+﻿@* @{
+    ViewData["Title"] = "Вхід";
+}
+
+<div class="auth-page">
+    <div class="auth-card auth-card-small">
+        <div class="auth-label">АВТОРИЗАЦІЯ</div>
+        <h2 class="auth-title">Вхід до системи</h2>
+        <p class="auth-subtitle">Увійдіть у свій акаунт, щоб працювати з магазином коміксів.</p>
+
+        <form action="javascript:void(0);" class="auth-form">
+            <div class="form-group">
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" placeholder="example@email.com" />
+            </div>
+
+            <div class="form-group">
+                <label for="login-password">Пароль</label>
+                <input type="password" id="login-password" placeholder="Введіть пароль" />
+            </div>
+
+            <button type="submit" class="primary-btn">Увійти</button>
+        </form>
+
+        <div class="auth-footer">
+            Немає акаунта?
+            <a asp-controller="Home" asp-action="Register">Зареєструватися</a>
+        </div>
+    </div>
+</div> *@
+
+@{
+    ViewData["Title"] = "Вхід";
+}
+
+<div class="auth-page">
+    <div class="auth-card auth-card-small">
+        <div class="auth-label">АВТОРИЗАЦІЯ</div>
+        <h2 class="auth-title">Вхід до системи</h2>
+        <p class="auth-subtitle">Увійдіть у свій акаунт, щоб працювати з магазином коміксів.</p>
+
+        <form asp-controller="Home" asp-action="Comics" method="get" class="auth-form">
+            <div class="form-group">
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" placeholder="example@email.com" />
+            </div>
+
+            <div class="form-group">
+                <label for="login-password">Пароль</label>
+                <input type="password" id="login-password" placeholder="Введіть пароль" />
+            </div>
+
+            <button type="submit" class="primary-btn">Увійти</button>
+        </form>
+
+        <div class="auth-footer">
+            Немає акаунта?
+            <a asp-controller="Home" asp-action="Register">Зареєструватися</a>
+        </div>
+    </div>
+</div>

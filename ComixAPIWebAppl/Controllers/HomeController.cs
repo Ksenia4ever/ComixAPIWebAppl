@@ -1,8 +1,6 @@
-using ComixAPIWebAppl.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 
-namespace ComixAPIWebAppl.Controllers
+namespace ComixAPIWebApp.Controllers
 {
     public class HomeController : Controller
     {
@@ -11,15 +9,28 @@ namespace ComixAPIWebAppl.Controllers
             return View();
         }
 
-        public IActionResult Privacy()
+        public IActionResult Genres()
         {
             return View();
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        public IActionResult Comics()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View();
+        }
+        public IActionResult Publishers()
+        {
+            return View();
+        }
+
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        public IActionResult Register()
+        {
+            return View();
         }
     }
 }
